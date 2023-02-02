@@ -10,6 +10,7 @@ export const state = {
     page: 1,
     resultsPerPage: RESULTS_PER_PAGE,
   },
+  bookmarks: [],
 };
 
 export const loadRecipe = async function (id) {
@@ -46,6 +47,8 @@ export const loadSearchResults = async function (query) {
         image: rec.image_url,
       };
     });
+
+    state.search.page = 1;
   } catch (error) {
     throw err;
   }
@@ -67,4 +70,12 @@ export const updateServings = function (newServings) {
   // newQt = oldQt * newServings / oldServings
 
   state.recipe.servings = newServings;
+};
+
+export const addBookmark = function (recipe) {
+  // add bookmark
+  state.bookmarks.push(recipe);
+
+  // mark current recipe as bookmarked
+  if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
 };
