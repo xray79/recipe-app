@@ -17,6 +17,39 @@ export default class View {
     this._parentElement.insertAdjacentHTML('afterbegin', markup);
   }
 
+  update(data) {
+    // update allows us to change parts of the DOM without a full rerender
+    this._data = data;
+    const newMarkup = this._generateMarkup();
+
+    const newDOM = document.createRange().createContextualFragment(newMarkup);
+    const newElements = Array.from(newDOM.querySelectorAll('*'));
+    const curElements = Array.from(this._parentElement.querySelectorAll('*'));
+
+    newElements.forEach((newEl, i) => {
+      const curEl = curElements[i];
+
+      // if the new element is different to the current element AND
+      // if the new element has a text value that is not an empty string
+      if (
+        !newEl.isEqualNode(curEl) &&
+        newEl.firstChild?.nodeValue.trim() !== ''
+      ) {
+        // update REAL DOM (screen) with new element text
+        curEl.textContent = newEl.textContent;
+      }
+
+      // change element attributes
+      // if elements are different
+      if (!newEl.isEqualNode(curEl))
+        // cast to array and itereate over each attr of the different element
+        Array.from(newEl.attributes).forEach(attr =>
+          // add/update each attr to the current element on screen
+          curEl.setAttribute(attr.name, attr.value)
+        );
+    });
+  }
+
   renderSpinner() {
     const markup = `
     <div class="spinner">

@@ -580,6 +580,8 @@ const controlRecipes = async function() {
         const id = window.location.hash.slice(1);
         if (!id) return;
         (0, _recipeViewJsDefault.default).renderSpinner();
+        // 0) update results view to mark selected
+        (0, _resultsViewJsDefault.default).update(_modelJs.getSearchResultsPage());
         // 1) Load recipe
         // model contains api call function to load recipe
         await _modelJs.loadRecipe(id);
@@ -616,8 +618,16 @@ const controlPagination = (goToPage)=>{
     // 2) render NEW pagination buttons
     (0, _paginationViewJsDefault.default).render(_modelJs.state.search);
 };
+const controlServings = function(newServings) {
+    // update recive servings in state obj
+    _modelJs.updateServings(newServings);
+    // update recipe view
+    // recipeView.render(model.state.recipe);
+    (0, _recipeViewJsDefault.default).update(_modelJs.state.recipe);
+};
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
+    (0, _recipeViewJsDefault.default).addHandlerUpdateServings(controlServings);
     (0, _searchViewJsDefault.default).addHandlerSearch(controlSearchResults);
     (0, _paginationViewJsDefault.default).addHandlerClick(controlPagination);
 };
@@ -2635,6 +2645,7 @@ parcelHelpers.export(exports, "state", ()=>state);
 parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
 parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
 parcelHelpers.export(exports, "getSearchResultsPage", ()=>getSearchResultsPage);
+parcelHelpers.export(exports, "updateServings", ()=>updateServings);
 var _regeneratorRuntime = require("regenerator-runtime");
 var _config = require("./config");
 var _helpers = require("./helpers");
@@ -2686,6 +2697,13 @@ const getSearchResultsPage = function(page = state.search.page) {
     const start = (page - 1) * (0, _config.RESULTS_PER_PAGE);
     const end = page * (0, _config.RESULTS_PER_PAGE);
     return state.search.results.slice(start, end);
+};
+const updateServings = function(newServings) {
+    state.recipe.ingredients.forEach((ing)=>{
+        ing.quantity = ing.quantity * newServings / state.recipe.servings;
+    });
+    // newQt = oldQt * newServings / oldServings
+    state.recipe.servings = newServings;
 };
 
 },{"regenerator-runtime":"dXNgZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./config":"k5Hzs","./helpers":"hGI1E"}],"k5Hzs":[function(require,module,exports) {
@@ -2752,6 +2770,14 @@ class RecipeView extends (0, _viewDefault.default) {
             window.addEventListener(ev, handler);
         });
     }
+    addHandlerUpdateServings(handler) {
+        this._parentElement.addEventListener("click", function(e) {
+            const btn = e.target.closest(".btn--update-servings");
+            if (!btn) return;
+            const { updateTo  } = btn.dataset;
+            if (+updateTo > 0) handler(+updateTo);
+        });
+    }
     _generateMarkup() {
         /* 
     generates markup for recipe view i.e. picture, title, ingredients, servings and cook time
@@ -2781,12 +2807,12 @@ class RecipeView extends (0, _viewDefault.default) {
             <span class="recipe__info-text">servings</span>
 
             <div class="recipe__info-buttons">
-              <button class="btn--tiny btn--increase-servings">
+              <button class="btn--tiny btn--update-servings" data-update-to="${this._data.servings - 1}">
                 <svg>
                   <use href="${0, _iconsSvgDefault.default}#icon-minus-circle"></use>
                 </svg>
               </button>
-              <button class="btn--tiny btn--increase-servings">
+              <button class="btn--tiny btn--update-servings" data-update-to="${this._data.servings + 1}">
                 <svg>
                   <use href="${0, _iconsSvgDefault.default}#icon-plus-circle"></use>
                 </svg>
@@ -3160,6 +3186,26 @@ class View {
         // render the new view
         this._parentElement.insertAdjacentHTML("afterbegin", markup);
     }
+    update(data) {
+        // update allows us to change parts of the DOM without a full rerender
+        this._data = data;
+        const newMarkup = this._generateMarkup();
+        const newDOM = document.createRange().createContextualFragment(newMarkup);
+        const newElements = Array.from(newDOM.querySelectorAll("*"));
+        const curElements = Array.from(this._parentElement.querySelectorAll("*"));
+        newElements.forEach((newEl, i)=>{
+            const curEl = curElements[i];
+            // if the new element is different to the current element AND
+            // if the new element has a text value that is not an empty string
+            if (!newEl.isEqualNode(curEl) && newEl.firstChild?.nodeValue.trim() !== "") // update REAL DOM (screen) with new element text
+            curEl.textContent = newEl.textContent;
+            // change element attributes
+            // if elements are different
+            if (!newEl.isEqualNode(curEl)) // cast to array and itereate over each attr of the different element
+            Array.from(newEl.attributes).forEach((attr)=>// add/update each attr to the current element on screen
+                curEl.setAttribute(attr.name, attr.value));
+        });
+    }
     renderSpinner() {
         const markup = `
     <div class="spinner">
@@ -3245,9 +3291,10 @@ id: "5ed6604591c37cdc054bcd09"
 image: "http://forkify-api.herokuapp.com/images/BBQChickenPizzawithCauliflowerCrust5004699695624ce.jpg"
 publisher: "Closet Cooking"
 title: "Cauliflower Pizza Crust (with BBQ Chicken Pizza)"
-*/ return `
+*/ const id = window.location.hash.slice(1);
+        return `
         <li class="preview">
-        <a class="preview__link" href="#${results.id}">
+        <a class="preview__link ${results.id === id ? "preview__link--active" : ""}" href="#${results.id}">
             <figure class="preview__fig">
             <img src="${results.image}" alt="Test" />
             </figure>
