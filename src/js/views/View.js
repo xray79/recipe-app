@@ -3,7 +3,7 @@ import icons from 'url:../../img/icons.svg';
 export default class View {
   _data;
 
-  render(data) {
+  render(data, render = true) {
     // check is there is data, or if the data array is empty
     if (!data || (Array.isArray(data) && data.length === 0))
       return this.renderError();
@@ -11,6 +11,10 @@ export default class View {
     this._data = data;
     // generate merkup returns html with correct values from data
     const markup = this._generateMarkup();
+
+    // if no render required method return markup only
+    if (!render) return markup;
+
     // clear any html left
     this._clear();
     // render the new view

@@ -2,12 +2,13 @@
 import 'core-js/stable';
 // polyfilling async-await
 import 'regenerator-runtime';
+import { async } from 'regenerator-runtime';
 
 import * as model from './model.js';
 import recipeView from './views/recipeView.js';
 import searchView from './views/searchView.js';
-import { async } from 'regenerator-runtime';
 import resultsView from './views/resultsView.js';
+import bookmarksView from './views/bookmarksView.js';
 import paginationView from './views/paginationView.js';
 
 // parcel hot module reloading, keeps state of app during dev
@@ -22,6 +23,7 @@ const controlRecipes = async function () {
 
     // 0) update results view to mark selected
     resultsView.update(model.getSearchResultsPage());
+    bookmarksView.update(model.state.bookmarks);
 
     // 1) Load recipe
     // model contains api call function to load recipe
@@ -77,8 +79,16 @@ const controlServings = function (newServings) {
 };
 
 const controlAddBookmark = function () {
-  model.addBookmark(model.state.recipe);
+  // Add bookmark
+  if (!model.state.recipe.bookmarked) model.addBookmark(model.state.recipe);
+  // Delete bookmark
+  else model.deleteBookmark(model.state.recipe.id);
+
+  // mark current recipe as bookmark
   recipeView.update(model.state.recipe);
+
+  // render bookmarks
+  bookmarksView.render(model.state.bookmarks);
 };
 
 const init = function () {
