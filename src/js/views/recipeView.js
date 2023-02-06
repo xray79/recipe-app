@@ -1,5 +1,5 @@
 import icons from 'url:../../img/icons.svg';
-import { Fraction } from 'fractional';
+import fracty from 'fracty';
 import View from './View';
 
 class RecipeView extends View {
@@ -138,7 +138,7 @@ class RecipeView extends View {
   _generateMarkupIngredients(ing) {
     /* 
     helper function designed to be used as callback for map function in generateMarkup()
-    This function renders each indredient quantity with the Fractional library and its description
+    This function renders each indredient quantity with the fracty library and its description
     */
     return `
             <li class="recipe__ingredient">
@@ -146,7 +146,7 @@ class RecipeView extends View {
                 <use href="${icons}#icon-check"></use>
               </svg>
               <div class="recipe__quantity">${
-                ing.quantity ? new Fraction(ing.quantity).toString() : ''
+                ing.quantity ? fracty(ing.quantity).toString() : ''
               }</div>
               <div class="recipe__description">
                 <span class="recipe__unit">${ing.unit}</span>
