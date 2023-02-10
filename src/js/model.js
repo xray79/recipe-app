@@ -106,12 +106,6 @@ export const deleteBookmark = function (id) {
   persistBookmarks();
 };
 
-const init = function () {
-  const storage = localStorage.getItem('bookmarks');
-  if (storage) state.bookmarks = JSON.parse(storage);
-};
-init();
-
 // to clear bookmarks when developing
 const clearBookmarks = function () {
   localStorage.clear('bookmarks');
@@ -147,3 +141,9 @@ export const uploadRecipe = async function (newRecipe) {
     throw err;
   }
 };
+
+const init = function () {
+  const storage = localStorage.getItem('bookmarks');
+  if (storage) state.bookmarks = JSON.parse(storage);
+};
+init();

@@ -137,7 +137,6 @@ const init = function () {
   searchView.addHandlerSearch(controlSearchResults);
   paginationView.addHandlerClick(controlPagination);
 };
-
 init();
 
 // DOCS: https://forkify-api.herokuapp.com/v2
